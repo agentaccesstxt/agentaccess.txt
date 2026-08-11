@@ -1,0 +1,3 @@
+title: agentaccess.txt
+description: A robots.txt-style file declaring which agentic AI tools may operate in a directory tree — and on which paths.
+theme: jekyll-theme-primer
