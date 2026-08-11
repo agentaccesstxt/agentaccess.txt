@@ -1,0 +1,19 @@
+# Rules match files as well as directories.
+#
+# Matching is by string prefix, robots.txt style: "Disallow: /notes"
+# would match /notes.txt, /notes/ AND /notes-public/. Anchor with $
+# to name exactly one file, and use * to match any characters.
+
+Agent: *
+
+# Exactly this file, nothing longer.
+Disallow: /credentials.json$
+
+# Every file of a type, anywhere in the tree.
+Disallow: /*.pem$
+Disallow: /*.env$
+
+# One file carved out of an otherwise-blocked directory:
+# the longer Allow pattern wins over the shorter Disallow (spec §6).
+Allow: /config/README.md$
+Disallow: /config/

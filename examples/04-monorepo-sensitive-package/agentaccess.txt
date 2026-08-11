@@ -1,0 +1,10 @@
+# Placed at the monorepo root: agents may work anywhere in the
+# repository EXCEPT the sensitive package.
+#
+# No rule matches paths outside /packages/payments/, and unmatched
+# paths are allowed (spec §6) — so only the sensitive subtree is
+# restricted. Disallowed paths are excluded even from directory
+# listings in model context (spec §7).
+
+Agent: *
+Disallow: /packages/payments/

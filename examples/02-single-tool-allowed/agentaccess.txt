@@ -1,0 +1,13 @@
+# One tool is permitted here; all other agentic AI tools stay out.
+#
+# The "Allow: /" is what separates the two groups: a new group
+# begins at the first "Agent:" line after a rule line, and blank
+# lines carry no meaning (spec §5). Without a rule, the two
+# "Agent:" lines would merge into ONE group — and the Disallow
+# below would apply to both.
+
+Agent: anthropic/claude-code
+Allow: /
+
+Agent: *
+Disallow: /

@@ -1,0 +1,7 @@
+# No agentic AI tools may operate in this directory tree.
+#
+# This is the minimal form: the * group applies to every agent,
+# and "Disallow: /" covers every path.
+
+Agent: *
+Disallow: /

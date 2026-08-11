@@ -1,0 +1,14 @@
+# One tool may work in selected subdirectories only; everything
+# else in the tree, and every other tool, is off limits.
+#
+# Rule selection is longest-match: for a path under /docs/, the
+# "Allow: /docs/" rule is longer than "Disallow: /", so it wins.
+# Paths are relative to the directory containing this file.
+
+Agent: anthropic/claude-code
+Allow: /docs/
+Allow: /src/public/
+Disallow: /
+
+Agent: *
+Disallow: /
