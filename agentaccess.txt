@@ -1,0 +1,8 @@
+# agentaccess.txt — https://github.com/agentaccesstxt/agentaccess.txt
+#
+# This repository documents the agentaccess.txt convention, so it
+# naturally carries one. Everything here is public documentation:
+# all agents are welcome everywhere.
+
+Agent: *
+Allow: /
