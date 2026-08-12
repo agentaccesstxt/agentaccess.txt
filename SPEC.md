@@ -1,7 +1,7 @@
 # The `agentaccess.txt` Convention
 
 **Status:** Draft 00 — for community discussion\
-**Home:** https://github.com/agentaccesstxt/agentaccess.txt\
+**Home:** <https://github.com/agentaccesstxt/agentaccess.txt>\
 **Author:** Peter Seprus\
 **Date:** 2026-08-12
 
