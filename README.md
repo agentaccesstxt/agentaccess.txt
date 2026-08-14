@@ -47,6 +47,39 @@ And **why would vendors honor a text file?** Because unlike `robots.txt` — a p
 
 **What it does change, security-wise,** is which *class* of attack can reach restricted paths: enforced in tool code rather than model judgment, the policy holds even when the model is steered — so prompt injection hidden in a README, a rules file, or a poisoned tool result no longer suffices, and **an attacker instead needs a hostile process on the machine, a far rarer and harder position. The threat is demoted, not eliminated;** [Appendix A](SPEC.md#appendix-a-threat-classes-and-degree-of-mitigation) of the spec surveys the documented attack classes and states honestly how much each one changes.
 
+```mermaid
+graph LR
+    Injected["Injected instructions<br/><i>README, tool result, rules file<br/>(Appendix A.1–A.3)</i>"] -.->|"can steer the model —<br/>cannot reach the check"| Model
+
+    subgraph MC ["Model context"]
+        Model["<b>AI model</b>"]
+    end
+
+    subgraph H ["Agent harness — deterministic tool code (§9)"]
+        Check{"<b>Policy check</b><br/><i>pre-flight, §4</i>"}
+    end
+
+    subgraph FS ["Filesystem"]
+        Policy["<b>agentaccess.txt</b>"]
+        AllowedPaths["Allowed paths"]
+        RestrictedPaths["<b>Restricted paths</b>"]
+    end
+
+    Model -->|"every covered operation:<br/>read, list, write, shell (§7)"| Check
+    Policy -->|"parsed as policy,<br/>never enters context (§9)"| Check
+    Check -->|"allowed"| AllowedPaths
+    AllowedPaths -->|"content enters context"| Model
+    Check -->|"<b>disallowed:</b> fixed denial —<br/>no content, no file names (§7, §9)"| Model
+    Check -. "never read" .-x RestrictedPaths
+
+    classDef check fill:#2b6cb0,stroke:#1a4971,color:#fff
+    classDef restricted fill:#9b2c2c,stroke:#7f1d1d,color:#fff
+    class Check check
+    class RestrictedPaths restricted
+```
+
+*Holds for conforming agents: a non-conforming or compromised process bypasses everything above ([Appendix A.5](SPEC.md#a5-compromised-agent-distribution)).*
+
 ## Documentation
 
 - **[Specification](SPEC.md)** — Draft 00, the normative document.
