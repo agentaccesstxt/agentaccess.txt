@@ -105,6 +105,8 @@ Identifiers are lowercase tokens of the form `vendor/product`, matched case-inse
 
 Each agent has exactly one canonical identifier, published by its vendor and recorded in the public [registry file](REGISTRY.md) maintained in this repository. An agent MUST match only its own identifier and `*`.
 
+The namespace is open in the manner of HTTP `User-Agent` product tokens ([RFC 9110 §10.1.5](https://www.rfc-editor.org/rfc/rfc9110#section-10.1.5)): any vendor can mint its own identifier without permission, and the registry records canonical spellings. Open to mint is not open to claim: under the rule above, matching another vendor's identifier is non-conformance. That is the lesson of the precedent — `User-Agent` strings decayed into compatibility masquerade because claiming others' names was tolerated — and, as everywhere in this convention (§2), the rule cannot stop a tool from lying about its identity, but it makes the lie a checkable violation of a published rule rather than accepted practice.
+
 Authors MAY write the product part alone (`Agent: claude-code`); agents SHOULD match this against their product token when the vendor prefix is absent.
 
 ### 6.2 Worked example
