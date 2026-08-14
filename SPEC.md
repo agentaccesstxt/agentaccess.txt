@@ -3,7 +3,9 @@
 **Status:** Draft 00 — for community discussion\
 **Home:** <https://github.com/agentaccesstxt/agentaccess.txt>\
 **Author:** Peter Seprus\
-**Date:** 2026-08-12
+**License:** [CC BY 4.0](LICENSE)\
+**Date:** 2026-08-12\
+**Updated:** 2026-08-14
 
 ---
 

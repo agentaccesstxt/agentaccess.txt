@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you reference this specification, please cite it as below."
+title: "agentaccess.txt"
+abstract: "A plain-text file convention that lets a directory declare which agentic AI tools may operate on its contents, and on which paths. Modeled on robots.txt."
+version: draft-00
+date-released: "2026-08-12"
+url: "https://agentaccesstxt.org"
+repository-code: "https://github.com/agentaccesstxt/agentaccess.txt"
+license: CC-BY-4.0
+authors:
+  - family-names: Seprus
+    given-names: Peter
+    orcid: "https://orcid.org/0009-0008-5499-6807"
+keywords:
+  - agentic-ai
+  - access-policy
+  - robots-txt
+  - well-known-file
