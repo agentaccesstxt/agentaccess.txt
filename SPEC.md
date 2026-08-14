@@ -9,7 +9,7 @@
 
 ## Abstract
 
-This document proposes `agentaccess.txt`, a plain-text file convention that lets a directory declare which agentic AI tools may operate on its contents, and on which paths. It is modeled on `robots.txt`: a per-agent, allow/disallow grammar that conforming tools consult *before* reading anything else in the directory tree. Like `robots.txt`, it is a cooperative signal, not an enforcement mechanism.
+This document proposes `agentaccess.txt`, a plain-text file convention that lets a directory declare which agentic AI tools may operate on its contents, and on which paths. It is modeled on `robots.txt` ([RFC 9309](https://www.rfc-editor.org/rfc/rfc9309)): a per-agent, allow/disallow grammar that conforming tools consult *before* reading anything else in the directory tree. Like `robots.txt`, it is a cooperative signal, not an enforcement mechanism.
 
 The name complements the established `AGENTS.md` convention: **`AGENTS.md` tells agents how to work in a project; `agentaccess.txt` tells them whether they may.**
 
@@ -17,12 +17,14 @@ The name complements the established `AGENTS.md` convention: **`AGENTS.md` tells
 
 Developers increasingly run several agentic AI tools side by side, and not every tool is appropriate for every project. A contractor may be permitted to use one assistant on a client's repository but not others; a company may allow AI tooling in most repositories but not in a sensitive one; an individual may simply want a personal-notes directory left alone.
 
-Today this intent can only be expressed per tool, each with its own mechanism: `.cursorignore`, `.aiexclude` / `.geminiignore`, `.aiignore`, `.codeiumignore`, tool-specific permission settings, or server-side configuration. Two problems follow:
+Today this intent can only be expressed per tool, each with its own mechanism: `.cursorignore`, `.aiexclude` / `.geminiignore`, `.aiignore`, `.codeiumignore`, JetBrains' `.noai`, tool-specific permission settings, or server-side configuration. Two problems follow:
 
 1. **The rules don't travel.** Each tool must be configured separately, and it is easy to forget one — especially when a new tool is installed after the restriction was decided.
 2. **Existing ignore files answer the wrong question.** They express *which paths* to exclude, uniformly for whichever tool reads them. None can express *which tools* are welcome — "tool X may work here, tool Y may not."
 
 The problem is sharpest for **IDE-embedded agents**. A CLI agent is invoked deliberately, in a repository the user chose; an AI feature built into an editor activates simply by opening a folder, and may begin indexing before the user has expressed any intent at all. Editors do offer per-workspace controls (for example VS Code's `chat.disableAIFeatures` setting, which users can set globally and re-enable per workspace), but these are again tool-specific, and the burden of remembering falls on every user, for every tool, on every machine. A committed workspace setting is in effect a directory-borne restriction marker for one editor — evidence of the need this convention generalizes.
+
+The problem is not confined to developer tooling. AI features increasingly ship in general-purpose applications that organize folders, summarize documents, and use files as reference material. Users of such applications cannot be assumed to know any per-tool exclusion mechanism, and the directories affected are personal and business documents rather than repositories. For this audience, a plain-text file in the directory itself is the only workable form of restriction.
 
 A single well-known file, placed once in the restricted directory, lets the restriction follow the directory rather than the tool: declared by the directory's owner, once, for every conforming agent on any machine.
 
@@ -36,9 +38,13 @@ This document also does not define instructions or context for agents (see `AGEN
 
 ## 3. Terminology
 
-The key words MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+The key words MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY are to be interpreted as described in BCP 14 ([RFC 2119](https://www.rfc-editor.org/rfc/rfc2119), [RFC 8174](https://www.rfc-editor.org/rfc/rfc8174)) when, and only when, they appear in all capitals, as shown here.
 
 **Agentic AI tool (agent):** software that autonomously or semi-autonomously reads, indexes, modifies, or transmits files on behalf of an AI model — coding assistants, CLI agents, IDE integrations, background indexers.
+
+**Harness:** the deterministic software surrounding the model — the code that registers and invokes tools, applies permission checks, and assembles what the model sees (the industry's [agent harness](https://en.wikipedia.org/wiki/Agent_harness)). Where this document says a policy is enforced in the harness, it means enforced in that code, never entrusted to the model's judgment.
+
+**Model context:** the material the harness supplies to the model as input — instructions, files, tool results. Content that never enters model context is invisible to the model.
 
 ## 4. File name and discovery
 
@@ -46,16 +52,18 @@ The file is named **`agentaccess.txt`** (lowercase) and applies to the directory
 
 Before performing any covered operation (§7) under a directory, a conforming agent MUST look for `agentaccess.txt` in that directory and each ancestor directory. The **nearest** `agentaccess.txt` file governs; files in higher ancestors are not merged. If no file is found, the agent is unrestricted by this convention (status quo).
 
-This check is a **pre-flight requirement**: the agent MUST evaluate the file before reading, indexing, or listing any other content in the governed tree. For IDE-embedded agents, opening a folder or workspace is itself a covered trigger — the check happens at open time, before any background indexing, not at the first user interaction with the AI feature. Reading `agentaccess.txt` itself is always permitted.
+This check is a **pre-flight requirement**: the agent MUST evaluate the file before reading, indexing, or listing any other content in the governed tree. For IDE-embedded agents, opening a folder or workspace is itself a covered trigger — the check happens at open time, before any background indexing, not at the first user interaction with the AI feature. Reading `agentaccess.txt` itself is always permitted. The evaluated policy MAY be cached within a session, but a change to any governing `agentaccess.txt` — including the appearance of a nearer file — MUST take effect no later than the next covered operation after the agent observes it.
 
 ## 5. Syntax
 
-The grammar is deliberately that of `robots.txt`, so existing parsers transfer.
+The grammar is deliberately that of `robots.txt` — the group structure, rule lines, and pattern matching defined in [RFC 9309 §2.2](https://www.rfc-editor.org/rfc/rfc9309#section-2.2) — so existing parser logic transfers; the only renamed directive is `Agent:`, taking the place of `User-agent:`.
 
-- The file is UTF-8, line-based. `#` begins a comment; comments and blank lines are ignored and carry no structural meaning — grouping comes from the directives alone.
+- The file is UTF-8 ([RFC 3629](https://www.rfc-editor.org/rfc/rfc3629)), line-based. `#` begins a comment; comments and blank lines are ignored and carry no structural meaning — grouping comes from the directives alone.
 - A **group** is one or more consecutive `Agent:` lines followed by zero or more rule lines, and applies to every agent it names. A group ends where the next begins: at the first `Agent:` line that follows a rule line. Blank lines do not separate groups, and consecutive `Agent:` lines with no rules between them head the same group — so a rule-less group (§6) is syntactically possible only as the last group in the file. To permit an agent everything unambiguously, write `Allow: /`.
 - Rule lines are `Allow: <pattern>` or `Disallow: <pattern>`.
-- Patterns are matched against the path of the target file or directory, relative to the directory containing `agentaccess.txt`, beginning with `/`. Matching follows robots.txt rules ([RFC 9309](https://www.rfc-editor.org/rfc/rfc9309)): prefix match, with `*` matching any character sequence and `$` anchoring the end. Matching operates on canonical paths — `.` and `..` segments are resolved before comparison, as are symlinks (§9) — so a pattern containing `..` can never match, and no rule can reach outside the governed tree (§4).
+- Patterns are matched against the path of the target file or directory, relative to the directory containing `agentaccess.txt`, beginning with `/`. Matching follows robots.txt rules ([RFC 9309](https://www.rfc-editor.org/rfc/rfc9309)): prefix match — a pattern matches any path that begins with it — with `*` matching any sequence of characters including `/`, and `$` anchoring the end of the path. Matching operates on canonical paths — `.` and `..` segments are resolved before comparison, as are symlinks (§9) — so a pattern containing `..` can never match, and no rule can reach outside the governed tree (§4). Canonical form also includes the platform's case folding and Unicode normalization: on filesystems that treat paths case-insensitively or normalize them, matching MUST use the canonicalized form, so that a pattern cannot be bypassed by respelling the path — `/Secrets/` slipping past `Disallow: /secrets/`.
+- Authoring errors fail in opposite directions. An over-broad `Disallow` errs restrictive — the safe failure for a restriction file; an over-broad `Allow` errs permissive: `Allow: /docs` also matches `/docs-secret/`, and under longest-match evaluation (§6) it overrides the shorter `Disallow: /`. Authors SHOULD end `Allow` patterns with a trailing `/`, a `$` anchor, or a complete file name — and, as with any syntax, a linter is the dependable guard against this class of mistake.
+- A pattern is valid only in the two forms the [RFC 9309](https://www.rfc-editor.org/rfc/rfc9309) grammar admits: beginning with `/`, or empty — an empty pattern matches nothing, so `Disallow:` with no value keeps its robots.txt meaning of restricting nothing. Any other pattern is **invalid** — the likely symptom of `.gitignore` habits, as in `Disallow: *.pem`. Here this convention deliberately departs from [RFC 9309](https://www.rfc-editor.org/rfc/rfc9309), which has parsers skip lines they cannot parse: a silently dropped `Disallow` in `robots.txt` merely costs extra crawling, but dropping one here would grant the very access the author meant to deny. A group containing an invalid rule line MUST be treated as if its rules were exactly `Disallow: /`, and the agent SHOULD surface the parse error to the user. This is distinct from the unknown-directive rule below: an unrecognized directive name is a future feature to skip; a malformed pattern on a known directive is an author error to fail closed on.
 - Unknown directives MUST be ignored (forward compatibility).
 
 ### Example
@@ -87,23 +95,38 @@ Disallow: /
 
 ## 6. Evaluation semantics
 
-1. **Group selection.** An agent uses the group that names its identifier (§6.1). If none does, it uses the `*` group. If there is no `*` group either, the agent MUST treat the entire tree as disallowed — the file's presence signals intent to restrict, so unmatched agents fail closed.
-2. **Rule selection.** Within the selected group, the rule with the longest matching pattern wins; the order of rules within a group is not significant. If an `Allow` and a `Disallow` match with equal specificity, `Allow` wins. If no rule matches, the path is allowed.
+1. **Group selection.** An agent uses the group that names its identifier (§6.1). If none does, it uses the `*` group. If there is no `*` group either, the agent MUST treat the entire tree as disallowed — the file's presence signals intent to restrict, so unmatched agents fail closed. This includes the degenerate case of a file with no groups at all: an empty `agentaccess.txt`, or one containing only comments, disallows the entire tree for every agent, for the same reason — presence alone declares the intent to restrict.
+2. **Rule selection.** Within the selected group, the rule with the longest matching pattern — most octets, the measure of specificity [RFC 9309 §2.2.2](https://www.rfc-editor.org/rfc/rfc9309#section-2.2.2) uses — wins; the order of rules within a group is not significant. If an `Allow` and a `Disallow` match with equal specificity, `Allow` wins. If no rule matches, the path is allowed.
 3. A group containing only `Agent:` lines and no rules allows everything for the named agents. Per §5, such a group can exist only at the end of the file; prefer an explicit `Allow: /`.
 
 ### 6.1 Agent identifiers
 
 Identifiers are lowercase tokens of the form `vendor/product`, matched case-insensitively as whole tokens — never as executable names or paths, which are platform-specific. Examples: `anthropic/claude-code`, `openai/codex`, `google/gemini-cli`, `cursor/cursor`, `jetbrains/junie`.
 
-Each agent has exactly one canonical identifier, published by its vendor and recorded in the public registry file maintained in this repository. An agent MUST match only its own identifier and `*`.
+Each agent has exactly one canonical identifier, published by its vendor and recorded in the public [registry file](REGISTRY.md) maintained in this repository. An agent MUST match only its own identifier and `*`.
 
 Authors MAY write the product part alone (`Agent: claude-code`); agents SHOULD match this against their product token when the vendor prefix is absent.
+
+### 6.2 Worked example
+
+Applying these rules to the example file of §5:
+
+| Agent | Path | Winning rule | Result |
+|---|---|---|---|
+| `anthropic/claude-code` | `/docs/guide.md` | `Allow: /docs/` | allowed |
+| `anthropic/claude-code` | `/src/public/api.ts` | `Allow: /src/public/` | allowed |
+| `anthropic/claude-code` | `/docs` (the directory entry itself) | `Disallow: /` | disallowed |
+| `anthropic/claude-code` | `/src/internal/keys.pem` | `Disallow: /` | disallowed |
+| `google/gemini-cli` | `/src/internal/keys.pem` | `Allow: /` | allowed |
+| `openai/codex` (not named in the file) | `/docs/guide.md` | `*` group: `Disallow: /` | disallowed |
+
+The third row is the subtle one: `Allow: /docs/` is not a prefix of `/docs`, so the directory entry itself falls to `Disallow: /` while the contents beneath it are allowed. Had the file named agents but no `*` group, the last row would be disallowed all the same — unmatched agents fail closed — and an empty file disallows every path for every agent. These rows are intended as seed cases for a shared conformance test suite (Appendix A.6).
 
 ## 7. Conformance
 
 A conforming agent, having selected its rules per §6:
 
-- MUST NOT read, index, embed, summarize, modify, or transmit the contents of disallowed paths, and MUST NOT include their file names or directory listings in model context;
+- MUST NOT read, index, embed, summarize, modify, or transmit the contents of disallowed paths by any means under its control — including shell commands it executes — and MUST NOT include their file names or directory listings in model context;
 - MUST apply the pre-flight check of §4 before any of the above;
 - MUST compose this policy restrictively with its own permission model: access to a path requires both to permit it. A tool-native grant — a session approval, an allowlist entry, a remembered workspace permission — does not lift a `Disallow` rule, because it authorizes the *tool* without naming the *restriction* and is therefore not the deliberate override defined below. When such a grant conflicts with this policy, the restriction prevails, and the agent SHOULD inform the user that its granted permission was narrowed by `agentaccess.txt`;
 - SHOULD inform the user, once per session, that `agentaccess.txt` restricted its access, without revealing disallowed content;
@@ -117,10 +140,11 @@ Vendors SHOULD document their identifier and their support for this convention.
 |---|---|---|
 | `.gitignore` | what is not part of the repository | unrelated; syntax inspiration only |
 | `.agentignore`, `.aiignore`, `.cursorignore`, `.aiexclude`, … | *which paths* an otherwise-permitted tool must skip | complementary; applied after `agentaccess.txt` grants access |
+| `.noai` (JetBrains) | whether one vendor's AI features may operate in a project at all | closest prior art: filesystem-scope and binary, but single-vendor — this convention generalizes it per-agent and per-path |
 | `AGENTS.md` | how permitted agents should behave | complementary; only consulted where access is allowed |
 | web-scope `agents.txt` (agents-txt.com) | what agent protocols and capabilities a *website* announces at its origin | unrelated; different domain (web origin vs. local filesystem), different grammar |
 | Tool-native managed policy, OS ACLs, sandboxes | enforcement | out of scope; always take precedence in the restrictive direction |
-| `robots.txt` / IETF AIPREF | web crawling and AI-usage preferences for published content | same trust model, different domain (web vs. local filesystem) |
+| `robots.txt` / IETF AIPREF / `ai.txt` (Spawning) | web crawling, AI-usage, and AI-training preferences for published content | same trust model, different domain (web vs. local filesystem) |
 
 `agentaccess.txt` deliberately reuses the `robots.txt` grammar rather than the `.gitignore` grammar so that the per-agent group structure comes for free and the file cannot be confused with a path-exclusion list. The name is deliberately distinct from both `AGENTS.md` (a different role: onboarding document vs. access policy) and the web-scope `agents.txt` (a different domain: web origins vs. local filesystems) — a repository deployed as a static site would otherwise serve its local policy at the URL where web agents expect the other spec's grammar.
 
@@ -130,10 +154,10 @@ Vendors SHOULD document their identifier and their support for this convention.
 
 Compliance is voluntary (§2). Further notes:
 
-- The file's *presence and contents* are observable to any tool; do not place sensitive information in comments or patterns.
-- Patterns can act as a map of what the owner considers sensitive — the classic `robots.txt` failure, where a disallow list doubles as a target list. The filesystem version is weaker than it first appears: unlike a public URL, this file is readable only by someone who already has access to the directory, and such a reader can already enumerate subdirectory names — the marginal disclosure is prioritization, not existence. Still, authors who want to name nothing at all SHOULD place the file *inside* the sensitive directory with a bare `Disallow: /`, rather than naming the subtree from a parent; nearest-file discovery (§4) makes the two equivalent in effect.
-- The file confers no protection against anyone who can modify it: write access to the directory is write access to the policy. Changes to `agentaccess.txt` are security-relevant and SHOULD receive the same review scrutiny as changes to `CODEOWNERS` or CI configuration — an attacker may loosen rules to expose restricted content, or tighten them to hide malicious code from AI-assisted review (§11).
-- Agents MUST treat `agentaccess.txt` purely as access policy. Its contents are not instructions to the model, and MUST NOT be injected into model context as natural language, which would create a prompt-injection surface.
+- **Information disclosure:** The file's *presence and contents* are observable to any tool; do not place sensitive information in comments or patterns.
+- **Sensitive-path enumeration:** Patterns can act as a map of what the owner considers sensitive — the classic `robots.txt` failure, where a disallow list doubles as a target list. The filesystem version is weaker than it first appears: unlike a public URL, this file is readable only by someone who already has access to the directory, and such a reader can already enumerate subdirectory names — the marginal disclosure is prioritization, not existence. Still, authors who want to name nothing at all SHOULD place the file *inside* the sensitive directory with a bare `Disallow: /`, rather than naming the subtree from a parent; nearest-file discovery (§4) makes the two equivalent in effect.
+- **Policy tampering:** The file confers no protection against anyone who can modify it: write access to the directory is write access to the policy. Changes to `agentaccess.txt` are security-relevant and SHOULD receive the same review scrutiny as changes to `CODEOWNERS` or CI configuration — an attacker may loosen rules to expose restricted content (including by adding a new descendant file that, under nearest-file discovery, replaces a stricter ancestor for its subtree — §4, §11), or tighten them to hide malicious code from AI-assisted review (§11).
+- **Prompt injection:** Agents MUST treat `agentaccess.txt` purely as access policy. Its contents are not instructions to the model, and MUST NOT be injected into model context as natural language, which would create a prompt-injection surface. This includes parse-error reporting (§5): the error goes to the user in the tool's own interface, and the offending line never enters model context — a deliberately malformed pattern whose text is in fact instructions would otherwise turn the error report into an injection vector.
 
 A conforming agent SHOULD evaluate this file in deterministic tool code, outside the model: the harness parses the policy and rejects disallowed operations before their results can enter model context. Enforced this way, restrictions hold even when the model itself is manipulated — including prompt injection delivered through tool results or tool descriptions, and instructions fragmented across several such channels, which empirically defeat model-level refusals. A manipulated model can attempt a disallowed operation but cannot execute it. This robustness does not extend to compromised or non-conforming processes (a malicious local plugin or MCP server reading the filesystem directly); that boundary requires OS-level enforcement (§2). Denial messages returned to the model SHOULD be fixed strings that reveal neither content nor policy text, and paths SHOULD be canonicalized — symlinks resolved — before the policy check.
 
@@ -147,11 +171,12 @@ Kept out of version 1 intentionally: operation classes (read-only vs. write vs. 
 
 1. Are robots.txt pattern semantics (§5) right for a *filesystem* audience? Prefix matching inverts developer intuition — under it, `/.env` matches `/.env.local` while gitignore readers expect it to name exactly one file, and `Disallow: /notes` silently covers `/notes-public/`. Gitignore-style component matching would fit developer muscle memory, but its native evaluation is order-dependent (last match wins), which conflicts with this draft's order-independent longest-match rule — and a hybrid (robots.txt groups, gitignore patterns, longest-match precedence) must first define specificity for patterns that don't compare by length.
 2. Is fail-closed for unmatched agents (§6) the right default, or too surprising?
-3. Should discovery stop at a boundary (home directory, filesystem root, VCS root), or always walk to `/`?
-4. Bare product tokens without vendor prefix: convenience worth the collision risk?
-5. Should conforming agents detect material policy changes between sessions and re-surface the restriction notice, so that a policy the user once saw cannot be silently swapped for another (cf. the approve-then-swap pattern of Appendix A.3)?
-6. May a tool explicitly tasked with security auditing disregard or override the file, given that restrictions can be abused to cloak malicious code from AI-assisted review (§9) — and if so, under what conditions?
-7. Should this effort and its identifier registry live in this repository, or attach to an existing community (Agent Client Protocol, the AGENTS.md community), given the complementary roles of `AGENTS.md` and this file?
+3. Under nearest-file discovery (§4), a descendant `agentaccess.txt` replaces its ancestors outright — so a new deep file containing `Allow: /` silently voids a root `Disallow` for its subtree, and a *new file* deep in a tree draws far less review attention than a diff to a root policy file (§9). Should ancestor files instead compose restrictively — by intersection, as §7 already composes this policy with tool-native permissions — so that a descendant can tighten but never loosen? And if so, does the legitimate loosening case (a deliberately shared subtree inside a restricted project) need an explicit delegation mechanism in the ancestor file?
+4. Should discovery stop at a boundary (home directory, filesystem root, VCS root), or always walk to `/`?
+5. Bare product tokens without vendor prefix: convenience worth the collision risk?
+6. Should conforming agents detect material policy changes between sessions and re-surface the restriction notice, so that a policy the user once saw cannot be silently swapped for another (cf. the approve-then-swap pattern of Appendix A.3)?
+7. May a tool explicitly tasked with security auditing disregard or override the file, given that restrictions can be abused to cloak malicious code from AI-assisted review (§9) — and if so, under what conditions?
+8. Should this effort and its identifier registry live in this repository, or attach to an existing community (Agent Client Protocol, the AGENTS.md community), given the complementary roles of `AGENTS.md` and this file?
 
 ## Appendix A: Threat classes and degree of mitigation
 
