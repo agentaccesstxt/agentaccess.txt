@@ -22,7 +22,7 @@ Identifier rules: lowercase, `vendor/product`, naming the agent product rather t
 
 - Prose in this repository is **not hard-wrapped**: one paragraph per line, no line breaks at any column. Let your editor soft-wrap.
 - `.editorconfig` covers the rest (UTF-8, LF, final newline).
-- [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) keywords (MUST, SHOULD, MAY) are reserved for the spec; do not use them casually in other documents.
+- BCP 14 ([RFC 2119](https://www.rfc-editor.org/rfc/rfc2119), [RFC 8174](https://www.rfc-editor.org/rfc/rfc8174)) keywords (MUST, SHOULD, MAY) are reserved for the spec; do not use them casually in other documents.
 
 ## License
 

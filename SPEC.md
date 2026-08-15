@@ -5,7 +5,7 @@
 **Author:** Peter Seprus\
 **License:** [CC BY 4.0](LICENSE)\
 **Date:** 2026-08-12\
-**Updated:** 2026-08-14
+**Updated:** 2026-08-15
 
 ---
 
@@ -26,7 +26,7 @@ Today this intent can only be expressed per tool, each with its own mechanism: `
 
 The problem is sharpest for **IDE-embedded agents**. A CLI agent is invoked deliberately, in a repository the user chose; an AI feature built into an editor activates simply by opening a folder, and may begin indexing before the user has expressed any intent at all. Editors do offer per-workspace controls (for example VS Code's `chat.disableAIFeatures` setting, which users can set globally and re-enable per workspace), but these are again tool-specific, and the burden of remembering falls on every user, for every tool, on every machine. A committed workspace setting is in effect a directory-borne restriction marker for one editor — evidence of the need this convention generalizes.
 
-The problem is not confined to developer tooling. AI features increasingly ship in general-purpose applications that organize folders, summarize documents, and use files as reference material. Users of such applications cannot be assumed to know any per-tool exclusion mechanism, and the directories affected are personal and business documents rather than repositories. For this audience, a plain-text file in the directory itself is the only workable form of restriction.
+The problem is not confined to developer tooling. AI features increasingly ship in general-purpose applications that organize folders, summarize documents, and use files as reference material. Users of such applications cannot be assumed to know any per-tool exclusion mechanism, and the directories affected are personal and business documents rather than repositories. For this audience, a plain-text file in the directory itself is a more accessible form of restriction than any per-tool setting: one visible file in a folder they already manage, rather than a separate control to find and set in every application, one by one.
 
 A single well-known file, placed once in the restricted directory, lets the restriction follow the directory rather than the tool: declared by the directory's owner, once, for every conforming agent on any machine.
 
@@ -220,7 +220,7 @@ No attacker at all: an IDE-embedded AI feature activates and begins indexing sim
 
 ### A.5 Compromised agent distribution
 
-The agent itself ships hostile. Documented example: the [Amazon Q Developer VS Code extension](https://aws.amazon.com/security/security-bulletins/AWS-2025-015/) v1.84.0 (July 2025), where an attacker with an inappropriately scoped repository token committed a prompt instructing the agent to "clean a system to a near-factory state" — deleting home directories and cloud resources — into a release installed by nearly a million users. A syntax error prevented execution.
+The agent itself ships hostile. Documented example: the [Amazon Q Developer VS Code extension](https://aws.amazon.com/security/security-bulletins/AWS-2025-015/) v1.84.0 (July 2025), where an attacker with an inappropriately scoped repository token committed a prompt instructing the agent to "clean a system to a near-factory state" — deleting home directories and cloud resources — into a release of an extension installed nearly a million times. A syntax error prevented execution.
 
 **Degree: none to marginal.** A compromised tool is non-conforming by definition; no cooperative signal restrains hostile code. (In the narrow variant where honest tool code executes a poisoned *prompt*, harness enforcement would still refuse restricted trees — but the general defense here is supply-chain hygiene and OS enforcement, §2.)
 
@@ -232,4 +232,4 @@ The tool intends confinement but implements it wrong. Documented example: the [C
 
 ---
 
-Read as a whole: the convention is at its strongest precisely where the model is the weak link (A.1–A.4) — because it removes the model from the enforcement path — and it is honestly worth nothing where the tool itself is hostile or broken (A.5–A.6). That is the same asymmetry `robots.txt` has lived with for thirty years.
+The convention is at its strongest precisely where the model is the weak link (A.1–A.4) — because it removes the model from the enforcement path — and it is honestly worth nothing where the tool itself is hostile or broken (A.5–A.6). That is the same asymmetry `robots.txt` has lived with for thirty years.
