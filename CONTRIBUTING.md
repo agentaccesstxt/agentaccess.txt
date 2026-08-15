@@ -1,3 +1,7 @@
+---
+title: Contributing
+---
+
 # Contributing
 
 This is a community convention in **Draft 00**: the most valuable contribution right now is critical discussion, not code.

@@ -11,13 +11,13 @@ No entry is currently vendor-confirmed. To register or confirm an identifier, se
 
 | Identifier | Vendor | Product | Status | Reference |
 |---|---|---|---|---|
-| `anthropic/claude-code` | Anthropic | Claude Code | proposed | https://claude.com/claude-code |
+| `anthropic/claude-code` | Anthropic | Claude Code | proposed | https://claude.com/product/claude-code |
 | `openai/codex` | OpenAI | Codex | proposed | https://openai.com/codex |
 | `google/gemini-cli` | Google | Gemini CLI | proposed | https://github.com/google-gemini/gemini-cli |
 | `github/copilot` | GitHub | Copilot | proposed | https://github.com/features/copilot |
 | `cursor/cursor` | Cursor | Cursor | proposed | https://cursor.com |
 | `jetbrains/junie` | JetBrains | Junie | proposed | https://www.jetbrains.com/junie/ |
 | `amazon/q-developer` | Amazon | Q Developer | proposed | https://aws.amazon.com/q/developer/ |
-| `windsurf/windsurf` | Windsurf | Windsurf | proposed | https://windsurf.com |
+| `windsurf/windsurf` | Cognition | Windsurf | proposed | https://devin.ai/desktop |
 
 Agents match only their own identifier and `*` (spec §6.1). Identifiers name the *agent product*, not the underlying model: `anthropic/claude-code` refers to the Claude Code tool, regardless of which model powers it.
