@@ -24,6 +24,14 @@ Today this intent can only be expressed per tool, each with its own mechanism: `
 1. **The rules don't travel.** Each tool must be configured separately, and it is easy to forget one — especially when a new tool is installed after the restriction was decided.
 2. **Existing ignore files answer the wrong question.** They express *which paths* to exclude, uniformly for whichever tool reads them. None can express *which tools* are welcome — "tool X may work here, tool Y may not."
 
+These mechanisms are also limited in ways their vendors document plainly:
+
+- Cursor's [documentation](https://cursor.com/docs/reference/ignore-file) states that terminal commands and MCP tools "run outside of Cursor's file access controls" and that `.cursorignore` "is not a security boundary."
+- GitHub documents that [Copilot content exclusion](https://docs.github.com/en/copilot/concepts/context/content-exclusion) is "currently not supported in Edit and Agent modes."
+- JetBrains [records](https://www.jetbrains.com/help/ai-assistant/disable-ai-assistant.html) that `.noai` "affects only the JetBrains AI Assistant plugin" and that ignored files "may still be processed."
+
+A path excluded from indexing can therefore still be read by the same tool through a shell command. This convention places its requirement in the harness rather than the model (§9) and counts shell commands among the covered operations (§7); it remains, like the mechanisms it joins, a cooperative signal and not a sandbox (§2).
+
 The problem is sharpest for **IDE-embedded agents**. A CLI agent is invoked deliberately, in a repository the user chose; an AI feature built into an editor activates simply by opening a folder, and may begin indexing before the user has expressed any intent at all. Editors do offer per-workspace controls (for example VS Code's `chat.disableAIFeatures` setting, which users can set globally and re-enable per workspace), but these are again tool-specific, and the burden of remembering falls on every user, for every tool, on every machine. A committed workspace setting is in effect a directory-borne restriction marker for one editor — evidence of the need this convention generalizes.
 
 The problem is not confined to developer tooling. AI features increasingly ship in general-purpose applications that organize folders, summarize documents, and use files as reference material. Users of such applications cannot be assumed to know any per-tool exclusion mechanism, and the directories affected are personal and business documents rather than repositories. For this audience, a plain-text file in the directory itself is a more accessible form of restriction than any per-tool setting: one visible file in a folder they already manage, rather than a separate control to find and set in every application, one by one.
@@ -192,11 +200,15 @@ Kept out of version 1 intentionally: operation classes (read-only vs. write vs. 
 
 ## Appendix A: Threat classes and degree of mitigation
 
-This appendix is motivational, not normative. It surveys documented classes of attack and overreach involving agentic AI tools and states, for each, how much a harness-enforced `agentaccess.txt` (§9) changes. All degrees assume a conforming, uncompromised agent; nothing here overrides §2.
+This appendix is motivational, not normative. It surveys documented classes of attack, overreach, and error involving agentic AI tools and states, for each, how much a harness-enforced `agentaccess.txt` (§9) changes. All degrees assume a conforming, uncompromised agent; nothing here overrides §2.
 
 ### A.1 Indirect prompt injection via content the agent reads
 
-Malicious instructions arrive inside material the agent legitimately processes — a README, an issue, a web page, a tool result — and steer it into reading and exfiltrating sensitive files. Documented examples: the [Gemini CLI hijack](https://tracebit.com/blog/code-exec-deception-gemini-ai-cli-hijack) (Tracebit, 2025), where instructions hidden in a README combined with an allow-list parsing flaw yielded silent data exfiltration; and [GhostSplice](https://thehackernews.com/2026/08/malicious-mcp-servers-can-split.html) (ASSET Research Group, 2026), where instructions fragmented across MCP tool descriptions and tool results raised model compliance from 42% to 82% across eleven tested models — no fragment looking malicious on its own.
+Malicious instructions arrive inside material the agent legitimately processes — a README, an issue, a web page, a tool result — and steer it into reading and exfiltrating sensitive files. Documented examples:
+
+- The [Gemini CLI hijack](https://tracebit.com/blog/code-exec-deception-gemini-ai-cli-hijack) (Tracebit, 2025): instructions hidden in a README combined with an allow-list parsing flaw yielded silent data exfiltration.
+- The [Google Antigravity exfiltration](https://www.promptarmor.com/resources/google-antigravity-exfiltrates-data) (PromptArmor, 2025): injection hidden in a web page drove the agent to read a project's `.env` with a shell command that bypassed the tool's own `.gitignore`-based protection for that file, then exfiltrate the credentials through an allowlisted domain.
+- [GhostSplice](https://thehackernews.com/2026/08/malicious-mcp-servers-can-split.html) (ASSET Research Group, 2026): instructions fragmented across MCP tool descriptions and tool results raised model compliance from 42% to 82% across eleven tested models, no fragment looking malicious on its own.
 
 **Degree: strong, for restricted trees.** Enforcement never consults the model's judgment (§9), so it holds no matter how thoroughly the model is steered: disallowed content can be neither read nor exfiltrated, because it never enters context. Content the policy allows remains exfiltratable — egress control is out of scope (§9).
 
@@ -208,7 +220,11 @@ Instruction files the agent trusts are themselves the injection vector. Document
 
 ### A.3 Malicious or compromised MCP servers and tool integrations
 
-The tool channel itself is hostile: instructions ride in tool descriptions or results, or the agent is steered into configuration writes that escalate to code execution. Documented examples: [CurXecute](https://www.tenable.com/blog/faq-cve-2025-54135-cve-2025-54136-vulnerabilities-in-cursor-curxecute-mcpoison) (CVE-2025-54135, Aim Security, 2025), where prompt injection made Cursor write `.cursor/mcp.json` and auto-execute the attacker's server; MCPoison (CVE-2025-54136, Check Point, 2025), where an approved MCP configuration could be silently swapped afterward; and GhostSplice (A.1).
+The tool channel itself is hostile: instructions ride in tool descriptions or results, or the agent is steered into configuration writes that escalate to code execution. Documented examples:
+
+- [CurXecute](https://www.tenable.com/blog/faq-cve-2025-54135-cve-2025-54136-vulnerabilities-in-cursor-curxecute-mcpoison) (CVE-2025-54135, Aim Security, 2025): prompt injection made Cursor write `.cursor/mcp.json` and auto-execute the attacker's server.
+- MCPoison (CVE-2025-54136, Check Point, 2025): an approved MCP configuration could be silently swapped afterward.
+- GhostSplice (A.1).
 
 **Degree: partial.** Covered operations include writes, so a policy disallowing the configuration path would have blocked a conforming agent from the CurXecute write. Model-steering variants are covered as in A.1. A malicious *local process* reading or writing disk on its own authority is beyond any cooperative convention — that boundary requires OS-level enforcement (§2, §9).
 
@@ -226,10 +242,24 @@ The agent itself ships hostile. Documented example: the [Amazon Q Developer VS C
 
 ### A.6 Enforcement bugs in otherwise-honest tools
 
-The tool intends confinement but implements it wrong. Documented example: the [Claude Code path-restriction bypass](https://cymulate.com/blog/cve-2025-547954-54795-claude-inverseprompt/) (CVE-2025-54794, Cymulate, 2025), where prefix matching instead of canonical path comparison let `/home/user/project-secrets` pass as inside `/home/user/project`.
+The tool intends confinement but implements it wrong. Documented examples:
+
+- The [Claude Code path-restriction bypass](https://cymulate.com/blog/cve-2025-547954-54795-claude-inverseprompt/) (CVE-2025-54794, Cymulate, 2025): prefix matching instead of canonical path comparison let `/home/user/project-secrets` pass as inside `/home/user/project`.
+- The [Anthropic Filesystem MCP server "EscapeRoute" flaws](https://cymulate.com/blog/cve-2025-53109-53110-escaperoute-anthropic/) (CVE-2025-53109 and CVE-2025-53110, Cymulate, 2025): the same prefix confusion together with a symlink-resolution error.
+- [Sandbox-escape flaws in the Cursor IDE](https://www.csoonline.com/article/4191923/sandbox-bypass-flaws-in-cursor-ide-highlight-prompt-injection-as-an-rce-vector.html) (CVE-2026-50548 and CVE-2026-50549, Cato Networks, 2026): reaching files outside the project directory through a working-directory override and a path-canonicalization fallback.
 
 **Degree: none directly.** The convention inherits the implementation quality of the tools that honor it. This class is why §9 tells implementations to resolve symlinks and canonicalize paths before the policy check, and why a shared conformance test corpus is worth more to this convention than additional prose.
 
+### A.7 Accidental destructive action by a conforming agent
+
+No attacker and no injection: a conforming agent, acting on a benign instruction, deletes or overwrites data through its own error. Documented examples:
+
+- The [Gemini CLI file-overwrite cascade](https://arstechnica.com/information-technology/2025/07/ai-coding-assistants-chase-phantoms-destroy-real-user-data/) (Ars Technica, 2025): a failed `mkdir` went undetected, and the subsequent `move` commands renamed each file onto the same nonexistent destination in turn, overwriting the directory's contents.
+- The [Claude Code home-directory wipe](https://www.docker.com/blog/coding-agent-horror-stories-the-rm-rf-incident/) (Docker, 2025): a repository-cleanup task produced an `rm -rf` whose trailing `~/` expanded to the user's entire home directory.
+- The [Claude file-cleanup deletion](https://futurism.com/artificial-intelligence/claude-wife-photos) (Futurism, 2026): a desktop-tidying task scoped to temporary files ran `rm -rf` against a directory of years of personal photos.
+
+**Degree: partial, on covered paths only.** Evaluated in the harness and never entering model context (§9), a `Disallow` is honored however the model reasons — so the file can serve as a declarative do-not-touch marker against an agent's own errors, its plainest value for the personal directories §1 describes. Two honest limits: it protects only paths a governing file can cover, so data destroyed over a network socket (a remote production database) is out of scope (§2); and where a tool disregards a constraint it already acknowledged — a "plan-only" mode that acts anyway — the convention is no more reliable than that tool's own guardrail, which is an enforcement bug (A.6), not this class.
+
 ---
 
-The convention is at its strongest precisely where the model is the weak link (A.1–A.4) — because it removes the model from the enforcement path — and it is honestly worth nothing where the tool itself is hostile or broken (A.5–A.6). That is the same asymmetry `robots.txt` has lived with for thirty years.
+The convention is at its strongest precisely where the model is the weak link (A.1–A.4) — because it removes the model from the enforcement path — and it is honestly worth nothing where the tool itself is hostile or broken (A.5–A.6). Against an agent's own accidents (A.7) it helps partially, and only on paths a policy file can cover. That is the same asymmetry `robots.txt` has lived with for thirty years.
