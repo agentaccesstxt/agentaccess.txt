@@ -35,7 +35,7 @@ Allow: /src/public/
 Disallow: /
 ```
 
-Rules match individual files too, not only directories: `Disallow: /*.env$` blocks every `.env` file in the tree (see the [examples](examples/)).
+Rules match individual files too, not only directories: `Disallow: /*.env$` blocks every path ending in `.env` — paired with `Disallow: /*.env.*` to cover the `.env.local` family (see the [examples](examples/)).
 
 The convention does not remove the need to vet your tools — it changes what vetting means. Instead of maintaining one configuration entry per path, per tool, per machine, you ask one checkable question of each tool you choose to run: does it honor `agentaccess.txt`? The [registry](REGISTRY.md) records which tools claim to. The policy itself remains your job — you write it, keep it truthful, and review changes to it like any security-relevant file.
 
@@ -65,7 +65,7 @@ graph LR
         RestrictedPaths["<b>Restricted paths</b>"]
     end
 
-    Model -->|"every covered operation:<br/>read, list, write, shell (§7)"| Check
+    Model -->|"every covered operation (§7):<br/>read, list, create, modify,<br/>delete, transmit — incl. shell"| Check
     Policy -->|"parsed as policy,<br/>never enters context (§9)"| Check
     Check -->|"allowed"| AllowedPaths
     AllowedPaths -->|"content enters context"| Model

@@ -9,9 +9,13 @@ Agent: *
 # Exactly this file, nothing longer.
 Disallow: /credentials.json$
 
-# Every file of a type, anywhere in the tree.
+# Every file of a type, anywhere in the tree. The $ anchor cuts
+# both ways: "/*.env$" also matches production.env, but misses
+# .env.local and .env.production — the unanchored ".env.*" rule
+# covers those variants.
 Disallow: /*.pem$
 Disallow: /*.env$
+Disallow: /*.env.*
 
 # One file carved out of an otherwise-blocked directory:
 # the longer Allow pattern wins over the shorter Disallow (spec §6).

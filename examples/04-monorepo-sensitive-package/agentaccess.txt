@@ -3,8 +3,12 @@
 #
 # No rule matches paths outside /packages/payments/, and unmatched
 # paths are allowed (spec §6) — so only the sensitive subtree is
-# restricted. Disallowed paths are excluded even from directory
-# listings in model context (spec §7).
+# restricted. Everything beneath the directory is excluded even
+# from listings in model context; the entry name "payments" itself
+# stays visible, because the trailing-slash pattern matches the
+# contents, not the entry (spec §6.2). Dropping the slash hides
+# the name too — at the cost of matching every sibling that
+# begins with "payments".
 
 Agent: *
 Disallow: /packages/payments/

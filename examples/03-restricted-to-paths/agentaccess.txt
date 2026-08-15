@@ -4,6 +4,11 @@
 # Rule selection is longest-match: for a path under /docs/, the
 # "Allow: /docs/" rule is longer than "Disallow: /", so it wins.
 # Paths are relative to the directory containing this file.
+#
+# Discovery: directories leading to allowed content stay
+# traversable — a listing of / may show docs/ and src/ by name —
+# while src/internal and every other disallowed entry are
+# suppressed (spec §7, §6.2).
 
 Agent: anthropic/claude-code
 Allow: /docs/
