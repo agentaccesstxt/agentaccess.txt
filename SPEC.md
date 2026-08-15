@@ -26,9 +26,9 @@ Today this intent can only be expressed per tool, each with its own mechanism: `
 
 These mechanisms are also limited in ways their vendors document plainly:
 
-- Cursor's [documentation](https://cursor.com/docs/reference/ignore-file) states that terminal commands and MCP tools "run outside of Cursor's file access controls" and that `.cursorignore` "is not a security boundary."
+- Cursor's [documentation](https://cursor.com/docs/reference/ignore-file) states that "the terminal and MCP server tools used by Agent cannot block access" to the code its `.cursorignore` governs.
 - GitHub documents that [Copilot content exclusion](https://docs.github.com/en/copilot/concepts/context/content-exclusion) is "currently not supported in Edit and Agent modes."
-- JetBrains [records](https://www.jetbrains.com/help/ai-assistant/disable-ai-assistant.html) that `.noai` "affects only the JetBrains AI Assistant plugin" and that ignored files "may still be processed."
+- JetBrains [records](https://www.jetbrains.com/help/ai-assistant/disable-ai-assistant.html) that `.noai` "affects only the JetBrains AI Assistant plugin" and that files ignored via `.aiignore` "may still be processed."
 
 A path excluded from indexing can therefore still be read by the same tool through a shell command. This convention places its requirement in the harness rather than the model (§9) and counts shell commands among the covered operations (§7); it remains, like the mechanisms it joins, a cooperative signal and not a sandbox (§2).
 
@@ -255,10 +255,10 @@ The tool intends confinement but implements it wrong. Documented examples:
 No attacker and no injection: a conforming agent, acting on a benign instruction, deletes or overwrites data through its own error. Documented examples:
 
 - The [Gemini CLI file-overwrite cascade](https://arstechnica.com/information-technology/2025/07/ai-coding-assistants-chase-phantoms-destroy-real-user-data/) (Ars Technica, 2025): a failed `mkdir` went undetected, and the subsequent `move` commands renamed each file onto the same nonexistent destination in turn, overwriting the directory's contents.
-- The [Claude Code home-directory wipe](https://www.docker.com/blog/coding-agent-horror-stories-the-rm-rf-incident/) (Docker, 2025): a repository-cleanup task produced an `rm -rf` whose trailing `~/` expanded to the user's entire home directory.
-- The [Claude file-cleanup deletion](https://futurism.com/artificial-intelligence/claude-wife-photos) (Futurism, 2026): a desktop-tidying task scoped to temporary files ran `rm -rf` against a directory of years of personal photos.
+- The [Claude Code home-directory wipe](https://www.docker.com/blog/coding-agent-horror-stories-the-rm-rf-incident/) (Docker, 2026): a repository-cleanup task produced an `rm -rf` whose trailing `~/` expanded to the user's entire home directory.
+- The [Claude file-cleanup deletion](https://futurism.com/artificial-intelligence/claude-wife-photos) (Futurism, 2026): a desktop-organizing task ran `rm -rf` against what the agent took for an empty folder, deleting a directory of family photos.
 
-**Degree: partial, on covered paths only.** Evaluated in the harness and never entering model context (§9), a `Disallow` is honored however the model reasons — so the file can serve as a declarative do-not-touch marker against an agent's own errors, its plainest value for the personal directories §1 describes. Two honest limits: it protects only paths a governing file can cover, so data destroyed over a network socket (a remote production database) is out of scope (§2); and where a tool disregards a constraint it already acknowledged — a "plan-only" mode that acts anyway — the convention is no more reliable than that tool's own guardrail, which is an enforcement bug (A.6), not this class.
+**Degree: partial, on governed paths only.** Evaluated in the harness and never entering model context (§9), a `Disallow` is honored however the model reasons — so the file can serve as a declarative do-not-touch marker against an agent's own errors, its plainest value for the personal directories §1 describes. Two honest limits: it protects only paths a governing file can cover, so data destroyed over a network socket (a remote production database) is out of scope (§2); and where a tool disregards a constraint it already acknowledged — a "plan-only" mode that acts anyway — the convention is no more reliable than that tool's own guardrail, which is an enforcement bug (A.6), not this class.
 
 ---
 
