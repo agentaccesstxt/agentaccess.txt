@@ -1,5 +1,7 @@
 # agentaccess.txt
 
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.22003193-007ec6)](https://doi.org/10.5281/zenodo.22003193)
+
 A plain-text file that declares which agentic AI tools may operate in a directory tree — and on which paths. Modeled on `robots.txt`; complementary to `AGENTS.md`.
 
 **`AGENTS.md` tells agents how to work in a project; `agentaccess.txt` tells them whether they may.**

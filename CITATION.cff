@@ -3,14 +3,33 @@ message: "If you reference this specification, please cite it as below."
 title: "agentaccess.txt"
 abstract: "A plain-text file convention that lets a directory declare which agentic AI tools may operate on its contents, and on which paths. Modeled on robots.txt."
 version: draft-00
-date-released: "2026-08-12"
+date-released: "2026-08-17"
 url: "https://agentaccesstxt.org"
 repository-code: "https://github.com/agentaccesstxt/agentaccess.txt"
 license: CC-BY-4.0
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.22003194
+    description: "Versioned DOI for draft-00"
+  - type: doi
+    value: 10.5281/zenodo.22003193
+    description: "Concept DOI for all versions of the specification"
 authors:
   - family-names: Seprus
     given-names: Peter
     orcid: "https://orcid.org/0009-0008-5499-6807"
+preferred-citation:
+  type: standard
+  title: "agentaccess.txt"
+  authors:
+    - family-names: Seprus
+      given-names: Peter
+      orcid: "https://orcid.org/0009-0008-5499-6807"
+  version: draft-00
+  year: 2026
+  month: 8
+  url: "https://agentaccesstxt.org"
+  doi: 10.5281/zenodo.22003194
 keywords:
   - agentic-ai
   - access-policy
