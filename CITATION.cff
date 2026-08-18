@@ -15,15 +15,15 @@ identifiers:
     value: 10.5281/zenodo.22003193
     description: "Concept DOI for all versions of the specification"
 authors:
-  - family-names: Seprus
-    given-names: Peter
+  - family-names: Seprűs
+    given-names: Péter
     orcid: "https://orcid.org/0009-0008-5499-6807"
 preferred-citation:
   type: standard
   title: "agentaccess.txt"
   authors:
-    - family-names: Seprus
-      given-names: Peter
+    - family-names: Seprűs
+      given-names: Péter
       orcid: "https://orcid.org/0009-0008-5499-6807"
   version: draft-00
   year: 2026
